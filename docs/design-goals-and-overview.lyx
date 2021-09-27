@@ -1,0 +1,497 @@
+#LyX 2.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 544
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass amsart
+\use_default_options true
+\begin_modules
+theorems-ams
+eqs-within-sections
+figs-within-sections
+\end_modules
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "palatino" "Museo"
+\font_sans "helvet" "Museo"
+\font_typewriter "cmtt" "Dank Mono"
+\font_math "auto" "default"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures true
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\use_minted 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\leftmargin 1in
+\topmargin 1in
+\rightmargin 1in
+\bottommargin 1in
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation skip
+\defskip medskip
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+A Loop Scheduling Format for SysTL
+\end_layout
+
+\begin_layout Standard
+The goal of this project is to develop a way to describe SysTL schedules
+ that's a little less awkward than string manipulation of SysTL code lines.
+ We'll preliminarily call it HLSD (high-level schedule description).
+ We wish to describe code transforms at a higher level than individual SysTL
+ calls: 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Goals: 
+\series default
+This format should be:
+\end_layout
+
+\begin_layout Itemize
+
+\emph on
+understandable
+\emph default
+ - a programmer should be able to read a schedule and have some idea what
+ it does.
+ Gilbert's opinion is that completely eliminating the need to look at the
+ generated code can lead to programmers not really understanding what's
+ going on, but on the other hand, we don't want to force people to go down
+ to the code for everything (this is a complaint about Chisel which I've
+ heard secondhand - reliance on Verilog generation requires people who need
+ to debug things, do verification, etc.
+ to understand two levels).
+ For now, I'll try to split the difference and make the standalone schedule
+ as understandable as possible, with the understanding that people will
+ need to go back to the generated code in for performance analysis and debugging.
+ Feedback on this appreciated.
+\end_layout
+
+\begin_layout Itemize
+
+\emph on
+human-modifiable
+\emph default
+ - the programmer should be able to easily modify the schedule.
+ For instance, if for some reason (e.g.
+ see Vivek's work on real-life tilings vs.
+ theoretical tilings, caused by issues such as prefetch performance and
+ vectorization) the programmer has reason to believe that a modified schedule
+ will do better, the programmer should be able to easily modify an HLSD
+ schedule.
+\end_layout
+
+\begin_layout Itemize
+
+\emph on
+composable 
+\emph default
+- multiple HLSDs should be able to be chained in order to represent different
+ graph transforms.
+ For instance, we may want to tile an operator to fit in cache, and then
+ perform a mapping of the sub-operation to an accelerator and its buffers
+ (essentially this is Seah's usecase right now - buffered accelerators hooked
+ up to shared cache).
+ This should be a composition of a cache-tiling HLSD and a scheduling HLSD.
+\end_layout
+
+\begin_layout Itemize
+
+\emph on
+generatable -
+\emph default
+ easily generated progamatically by independent kernels (e.g.
+ one for CoSA, one for HBL tilings, etc.).
+ Should have a nice constructor or generator function for writers of such
+ kernels to call.
+\end_layout
+
+\begin_layout Itemize
+
+\emph on
+serializable
+\emph default
+ - store schedules and their configurations easily for future runs, and
+ perhaps for GPTune and similar things to run from.
+\end_layout
+
+\begin_layout Itemize
+
+\emph on
+standalone
+\emph default
+ from SysTL (doesn't require changing SysTL code, for ease of development).
+\end_layout
+
+\begin_layout Standard
+Currently, many optimizing compiler systems [public citation source?] use
+ LLVM-like transformation passes, integrating both the 
+\emph on
+mechanics
+\emph default
+ of transform to the IR (e.g.
+ 
+\begin_inset Quotes eld
+\end_inset
+
+in order to split a loop, generate two other loops, add padding if the loop
+ bound isn't a multiple of the tile size
+\begin_inset Quotes erd
+\end_inset
+
+), with the actual 
+\emph on
+decisions
+\emph default
+ being made (e.g.
+ 
+\begin_inset Quotes eld
+\end_inset
+
+the best loop tile size is 8x8
+\begin_inset Quotes erd
+\end_inset
+
+).
+ SysTL provides a nice way to express mechanics as low-level operations
+ (
+\begin_inset Quotes eld
+\end_inset
+
+split loop
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+reorder loop
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+turn this small set of loops into machine instructions
+\begin_inset Quotes erd
+\end_inset
+
+, etc.) but many scheduling systems compose these low-level instructions
+ in nontrivially complicated ways (e.g.
+ a CoSA schedule may or may not, depending on the problem parameters, tile
+ loops multiple times at multiple levels, perform some or no loop reorderings,
+ and parallelize certain loops).
+ What HLSD basically does is to allow these systems to be abstracted off
+ as independent programs, without the need to worry about generating the
+ scheduling code.
+\end_layout
+
+\begin_layout Section
+Structure
+\end_layout
+
+\begin_layout Standard
+A HLSD is a python object with the following properties (defined as an abstract
+ class):
+\end_layout
+
+\begin_layout Itemize
+a constructor that takes as input some parameters determined by the output.
+\end_layout
+
+\begin_layout Itemize
+a function 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+texttt{apply()}
+\end_layout
+
+\end_inset
+
+ that applies the appropriate SysTL transforms to the object.
+ 
+\end_layout
+
+\begin_layout Itemize
+(under consideration) a function that dumps the code that does the previous
+ bulleted operation to the user, so they can get raw SysTL code that does
+ the same thing (easy to modify)
+\end_layout
+
+\begin_layout Itemize
+a function that serializes the object into human-readable/editable format
+ and deserializes it.
+\end_layout
+
+\begin_layout Standard
+HLSD may be subclassed into individual schedule types that impose additional
+ restrictions on what can be expressed inside them.
+ For instance, we may have a TilingScheduleDescription that 
+\emph on
+only
+\emph default
+ allows loop tilings to be generated.
+ That way, we can separate the schedule transformations from the (mostly
+ numerical) parameters passed into them, and allow for easy manipulation
+ of schedule objects with certain constraints (e.g.
+ one can imagine a tuner that takes a TilingScheduleDescription and performs
+ a bunch of transforms of nearby tiles - such a thing wouldn't be easy if
+ we didn't have restrictions that tiling schedules were only for tiling.
+\end_layout
+
+\begin_layout Standard
+HLSD objects will be automatically generated by 
+\emph on
+autoschedule generators
+\emph default
+ - these encapsulate things like 
+\begin_inset Quotes eld
+\end_inset
+
+generate HBL tiling for given problem size
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Autoschedulers are intended to be mostly standalone programs, with their
+ only linkage to SysTL being the HLSD constructor in order to maximize modularit
+y.
+\end_layout
+
+\begin_layout Standard
+For instance, one can imagine an HBL tiling autoscheduler: when provided
+ with memory bounds and tile size, it computes the optimal tile size internally
+ then constructs an HLSD object (specifically, a TilingScheduleDescription
+ object) that actually performs the tiling.
+\end_layout
+
+\begin_layout Standard
+The user (or an autotuner) can then apply this HLSD in thir code to use
+ the autoscheduler, or interactively dump and modify it.
+\end_layout
+
+\begin_layout Standard
+Future work: tuning harness that automatically tunes specified constructor
+ parameters to a given HLSD (which would both let us define specific tuning
+ domains as AutoTVM does, by subclassing the HLSD object, and to integrate
+ Ansor-style tuning by defining a more general HLSD which can represent
+ any Ansor output.).
+\end_layout
+
+\begin_layout Standard
+This document will be updated as I do implementation.
+\end_layout
+
+\begin_layout Section
+Example Transforms
+\end_layout
+
+\begin_layout Subsection
+Communication-Optimal Tilings for CNNs and Projective Nested Loops
+\end_layout
+
+\begin_layout Standard
+The goal is to determine a optimal tilings (given a single batch) for a
+ single set of nested loops.
+ For now, we're focusing on projected nested loops (matmul-like) and CNNs,
+ with priority to CNNs.
+\end_layout
+
+\begin_layout Standard
+Our goal is to maximize the loop tile size (the number of operations) subject
+ to the requirement that all loops fit inside local memory.
+\end_layout
+
+\begin_layout Standard
+For the projected nested loop case, we are given some set of subsets 
+\begin_inset Formula $\phi_{j}$
+\end_inset
+
+ of 
+\begin_inset Formula $[1...n]$
+\end_inset
+
+ for some 
+\begin_inset Formula $n$
+\end_inset
+
+ and same numbers 
+\begin_inset Formula $l_{i}$
+\end_inset
+
+ corresponding to the size of the problem.
+ Basically, we want to maximize the size of the tile whose dimensions are
+ 
+\begin_inset Formula $b_{i}$
+\end_inset
+
+ subject to
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{eqnarray*}
+\max_{b_{i}}\prod_{i}b_{i} & \text{s.t.} & \sum_{j}\prod_{i\in\phi_{j}}b_{i}\le M\\
+ &  & b_{i}\le l_{i}\qquad\forall i
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The CNN problem is similar.
+ 
+\end_layout
+
+\begin_layout Standard
+Typically, in theoretical papers we do this by relaxing the constraint 
+\begin_inset Formula 
+\[
+\sum_{j}\prod_{i\in\phi_{j}}b_{i}\le M
+\]
+
+\end_inset
+
+to
+\begin_inset Formula 
+\[
+\prod_{i\in\phi_{j}}b_{i}\le M\qquad\forall j
+\]
+
+\end_inset
+
+(or perhaps tighten it, by replacing 
+\begin_inset Formula $M$
+\end_inset
+
+ with 
+\begin_inset Formula $M/n$
+\end_inset
+
+).
+ In effect, we are allocating the same amount of space to the block of each
+ matrix.
+\end_layout
+
+\begin_layout Standard
+Bonuses for: integral solution (obviously this is something worse than ILP
+ and pretty hard) or even better yet, solutions respecting multiples (obviously
+ rounding..), support for replacing the 
+\begin_inset Formula $\sum_{j}\prod_{i\in\phi_{j}}b_{i}\le M$
+\end_inset
+
+ constraint with 
+\begin_inset Formula $\sum_{j\in J_{k}}\prod_{i\in\phi_{j}}b_{i}\le M_{k}$
+\end_inset
+
+ (i.e.
+ assigning certain matrices to certain fixed buffers).
+\end_layout
+
+\begin_layout Standard
+Since this runs in the compile time, performance isn't critical, but we
+ may wish to use its result as part of a larger program that may be tuned,
+ so a few seconds is probably fine.
+\end_layout
+
+\begin_layout Standard
+@Riley: if you can provide code to solve the above function for inputted
+ 
+\begin_inset Formula $\phi$
+\end_inset
+
+, 
+\begin_inset Formula $M$
+\end_inset
+
+, I can provide the HLSD subclass and constructor.
+\end_layout
+
+\begin_layout Subsection
+CoSA code
+\end_layout
+
+\begin_layout Standard
+Generate code from a CoSA boolean matrix.
+\end_layout
+
+\begin_layout Standard
+Should just be translation.
+ All the code is already in the ucb-bar/cosa repo.
+ Needs gurobi.
+\end_layout
+
+\begin_layout Subsection
+Pipelined neural nets - more complicated???
+\end_layout
+
+\end_body
+\end_document
