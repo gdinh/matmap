@@ -1,29 +1,33 @@
 # MoST_base.py
 # Base classes for MoST
 
+import json
+
 class MoSTSchedule:
 
     # This constructor SHOULD NOT actually implement the schedule
     # For instance, for an autotiler, the constructor should just create 
     # Actually deciding the tile should be the job of a function in /schedules
     # that generates an object of this class (or its subclass).
-    def __init__():
-        raise NotImplementedError
+    def __init__(self):
+        pass
 
     # Apply the transformation to the inputted object.
     # fn's type depends on the backend (e.g. a SysTL function)
-    def apply(fn, backend="systl"):
+    def apply(self, fn, backend="systl"):
         raise NotImplementedError
 
-    # possibly relevant: https://docs.python.org/3/library/pprint.html
-    # TODO add some general implementation.
-    # we should ALWAYS add the type at the beginning of the serialization
-    # so deserialization can call it.
-    def serialize():
-        raise NotImplementedError
+    # The following (de)serialization will work for any schedule object that
+    # only uses basic python data types for members (which is probably most of them)
+    # It may be overriden if wished.
+    def serialize(self):
+        return json.dumps(vars(self))
 
-    def deserialize():
-        raise NotImplementedError
+    @classmethod
+    def deserialize(cls, dump):
+        rv = cls();
+        rv.__dict__ = json.loads(dump)
+        return rv
 
     # Spits out SysTL code that does the same thing as apply()
     # May or may not be a good idea, depending on how important
@@ -31,13 +35,13 @@ class MoSTSchedule:
     # Implementing this is optional. Nothing should depend on it.
     # Use serialize() and deserialize() instead
     # Strictly a convenience function to be run by end users.
-    def generateBackendCode(fn, backend="systl"):
+    def generateBackendCode(self, fn, backend="systl"):
         raise NotImplementedError
         
 # object representing multiple transfoms in sequence to represent function composition
 class CompoundSchedule(MoSTSchedule):
 
-    def __init__(schedule_list, flattenWhenComposed=True):
+    def __init__(self, schedule_list, flattenWhenComposed=True):
         for sched in schedule_list:
             assert isinstance(sched, MoSTSchedule), "Non-MoSTSchedule argument passed into CompoundSchedule"
 
@@ -49,23 +53,14 @@ class CompoundSchedule(MoSTSchedule):
             if isinstance(subsched, CompoundSchedule) and subsched.flattenWhenComposed:
                 #replace with flattened instance
 
-    def apply(fn, backend="systl"):
+    def apply(self, fn, backend="systl"):
         transformed = fn
         for subsched in self.schedule_list:
             transformed = subsched.apply(transformed)
         return transformed
 
-    def serialize():
-        # FIXME
-        # once general serialization framework set up,
-        # should just spit out string list of what we want
-        raise NotImplementedError
+    #FIXME do generic (de)serialize  methods work here????
 
-    def deserialize():
-        raise NotImplementedError
-
-    def generateBackendCode(fn, backend="systl"):
-        raise NotImplementedError
 
 # This object JUST contains a snippet of SysTL code.
 # Shouldn't need to be used outside of testing and the like.
@@ -73,5 +68,5 @@ class CompoundSchedule(MoSTSchedule):
 # so I can give you something that doesn't need this hack.
 
 class SysTLCodeSchedule(MoSTSchedule):
-    def __init__(code):
+    def __init__(self, code):
         self.code-snippet = ()
