@@ -10,7 +10,8 @@ class MoSTSchedule:
     # Actually deciding the tile should be the job of a function in /schedules
     # that generates an object of this class (or its subclass).
     def __init__(self):
-        pass
+        #for serialization purposes
+        self._schedule_type = self.__class__.__name__
 
     # Apply the transformation to the inputted object.
     # fn's type depends on the backend (e.g. a SysTL function)
@@ -20,13 +21,25 @@ class MoSTSchedule:
     # The following (de)serialization will work for any schedule object that
     # only uses basic python data types for members (which is probably most of them)
     # It may be overriden if wished.
+    # TODO: probably a bit hacky with some non-obvious pitfalls. suggestions for improvement:
+    # https://hynek.me/articles/serialization/
+    # https://marshmallow.readthedocs.io/en/stable/
+    # https://desert.readthedocs.io/en/stable/
     def serialize(self):
         return json.dumps(vars(self))
 
     @classmethod
     def deserialize(cls, dump):
-        rv = cls();
-        rv.__dict__ = json.loads(dump)
+        var_dict = json.loads(dump)
+
+        sched_type_str = var_dict['_schedule_type']
+        #just some basic validation here, so you can't blow up your system with bad input
+        valid_chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_'
+        for char in sched_type_str:
+            assert char in valid_chars, "deserialize: invalid character in _schedule_type of input JSON"
+        
+        fields = eval(sched_type + '()')
+        rv.__dict__ = var_dict
         return rv
 
     # Spits out SysTL code that does the same thing as apply()
@@ -42,16 +55,16 @@ class MoSTSchedule:
 class CompoundSchedule(MoSTSchedule):
 
     def __init__(self, schedule_list, flattenWhenComposed=True):
-        for sched in schedule_list:
-            assert isinstance(sched, MoSTSchedule), "Non-MoSTSchedule argument passed into CompoundSchedule"
-
-        self.subschedules = schedule_list
+        self.subschedules = []
         # typically true, so we don't have ridiculous nesting
         # some schedules may want to preserve structure (e.g. subclasses that keep extra metadata)
         self.flattenWhenComposed = flattenWhenComposed
-        for subsched in self.subschedules:
+        for subsched in schedule_list:
+            assert isinstance(subsched, MoSTSchedule), "Non-MoSTSchedule argument passed into CompoundSchedule"
             if isinstance(subsched, CompoundSchedule) and subsched.flattenWhenComposed:
-                #replace with flattened instance
+                subschedules.extend(subsched.subschedules)
+            else:
+                subschedules.append(subsched)
 
     def apply(self, fn, backend="systl"):
         transformed = fn
@@ -59,14 +72,18 @@ class CompoundSchedule(MoSTSchedule):
             transformed = subsched.apply(transformed)
         return transformed
 
-    #FIXME do generic (de)serialize  methods work here????
+    # TODO: figure out how to deal with nested input.
+    # there are some libraries for this, probably better than this hack
+    def serialize(self):
+        serialized_subschedules = map(lambda sched: sched.serialize(), self.subschedules)
+        return json.dumps(vars(self))
 
 
 # This object JUST contains a snippet of SysTL code.
-# Shouldn't need to be used outside of testing and the like.
-# If you actually do need to use it for some reason please let me know, 
-# so I can give you something that doesn't need this hack.
+# Shouldn't be used most of the time, but may be useful if you
+# need to, say, run a few explicit SysTL calls within a CompoundSchedule
+# Probably dangerous.
 
 class SysTLCodeSchedule(MoSTSchedule):
     def __init__(self, code):
-        self.code-snippet = ()
+        pass

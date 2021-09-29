@@ -15,7 +15,7 @@ Design goals can be found under docs/design-goals-and-overview.lyx.
 
 Currently working on:
 - abstract MOST description object
-- Interface with SysTL (to apply transforms via SysTL, etc.))
+- Interface with SysTL, esp. figuring out how to pattern match, etc.
 
 Next TODOs:
 - [CoSA](https://github.com/ucb-bar/cosa) transform
