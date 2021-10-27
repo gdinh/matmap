@@ -13,7 +13,7 @@ ProjectiveDataAccess = namedtuple("ProjectiveDataAccess", ["name", "support"])
 def readLoopNest(nest, order=0):
   assert type(order) is int, "Wrong type in order arg of getLoopVarsAndBounds"
   loops = nest.get_ast("for _ in _: _ #" + str(order))
-  assert type(loops) is list and len(loops) == 1
+  assert type(loops) is list and len(loops) >= 1
   assert isinstance(loops[0], QAST.For)
 
   body = None
@@ -107,7 +107,7 @@ def getFixedLoopBounds(nest, order=0):
 
 #debug helpers - delete after done
 
-def new_sgemm():
+def __debug_new_sgemm():
   @proc
   def sgemm_full(
       N: size,
@@ -124,7 +124,6 @@ def new_sgemm():
           for j in par(0, M):
               for k in par(0, K):
                   D[i,j] = A[0,0] + E
+                  A[i,k] += A[i, k] * B[k, j]
                   C[i, j] += A[i, k] * B[k, j]
   return sgemm_full
-
-sgemm = new_sgemm()
