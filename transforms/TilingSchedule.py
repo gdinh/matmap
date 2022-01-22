@@ -33,6 +33,10 @@ class TilingSchedule(MoSTSchedule):
             fn = fn.simplify()
         return fn
 
+    # generates tiles for projective nested loops
+    # see https://arxiv.org/abs/2003.00119
+    # but this also includes ability to determine optimal alloc
+    # thanks to Riley Murray for the code to do this
     @classmethod
     def generateHBLProjectiveTile(cls, bounds, accesses, memsize, verbose=False):
         import numpy as np
