@@ -62,13 +62,13 @@ class CompoundSchedule(MoSTSchedule):
         for subsched in schedule_list:
             assert isinstance(subsched, MoSTSchedule), "Non-MoSTSchedule argument passed into CompoundSchedule"
             if isinstance(subsched, CompoundSchedule) and subsched.flattenWhenComposed:
-                subschedules.extend(subsched.subschedules)
+                self.subschedules.extend(subsched.subschedules)
             else:
-                subschedules.append(subsched)
+                self.subschedules.append(subsched)
 
     def apply(self, fn, backend="systl"):
         transformed = fn
-        for subsched in self.schedule_list:
+        for subsched in self.subschedules:
             transformed = subsched.apply(transformed)
         return transformed
 
