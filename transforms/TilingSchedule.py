@@ -1,6 +1,6 @@
 # describes tiling of multiple loops.
-# FIXME figure out what the best way of calling SysTL functions here is.
-# probably need an import or two.
+# FIXME update serialization
+# TODO rewrite this so that it doesn't 
 
 from __future__ import annotations
 import sys
@@ -12,23 +12,30 @@ from itertools import dropwhile
 class TilingSchedule(MoSTSchedule):
     #loop bounds are a ForLoop object
     #tile_bounds is a dict mapping names from the ForLoop to numbers
-    def __init__(self, loop_bounds, tile_bounds, simplify=True):
-        self.loop_bounds = loop_bounds
-        self.tile_bounds = tile_bounds
+    #FIXME OLD def __init__(self, loop_bounds, tile_bounds, simplify=True):
+    #tile_dict is a dict from strings (var names) to numbers.
+    def __init__(self, tile_dict, simplify=True):
+        self.tile_dict = tile_dict
+        #self.loop_bounds = loop_bounds
+        #self.tile_bounds = tile_bounds
         self.simplify = simplify
 
     def apply(self, fn, backend="systl"):
-        for loop in self.loop_bounds:
-            block_size = self.tile_bounds[loop.name]
-            new_names = (loop.name + "_out", loop.name + "_in")
+        for loop_idx in self.tile_dict:
+            block_size = self.tile_dict[loop_idx]
+            new_names = (loop_idx + "_out", loop_idx + "_in")
             perfect = False #FIXME detect if lo, hi are constant; can infer
-            fn = fn.split(loop.name + " #0", block_size, new_names,
-              tail='cut', perfect=perfect)
+            fn = fn.split(
+                loop_idx + " #0",
+                block_size,
+                new_names,
+                tail='cut',
+                perfect=perfect)
             new_bounds = getNestBounds(fn)
             loop_indices = [loop.name for loop in new_bounds]
-            _, *indices_after = dropwhile(lambda idx: idx != loop.name + '_in', loop_indices)
+            _, *indices_after = dropwhile(lambda idx: idx != loop_idx + '_in', loop_indices)
             for idxafter in indices_after:
-                fn = fn.reorder(loop.name + "_in #0", idxafter)
+                fn = fn.reorder(loop_idx + "_in #0", idxafter)
         if self.simplify:
             fn = fn.simplify()
         return fn
@@ -98,5 +105,5 @@ class TilingSchedule(MoSTSchedule):
                 return int(var)
         round_b = [round_approx(i) for i in opt_b]
         output_tile = dict([(idxvar[i], round_b[i]) for i in range(len(round_b))])
-
-        return cls(bounds, output_tile)
+        print(output_tile)
+        return cls(output_tile)
