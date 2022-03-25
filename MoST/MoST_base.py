@@ -14,8 +14,8 @@ class MoSTSchedule:
         self._schedule_type = self.__class__.__name__
 
     # Apply the transformation to the inputted object.
-    # fn's type depends on the backend (e.g. a SysTL function)
-    def apply(self, fn, backend="systl"):
+    # fn's type depends on the backend (e.g. an exo function)
+    def apply(self, fn, backend="exo"):
         raise NotImplementedError
 
     # The following (de)serialization will work for any schedule object that
@@ -26,6 +26,9 @@ class MoSTSchedule:
     # https://marshmallow.readthedocs.io/en/stable/
     # https://desert.readthedocs.io/en/stable/
     def serialize(self):
+        dump = vars(self)
+        dump['__class__'] = str(self.__class__)
+        dump['__module__'] = str(self.__module__)
         return json.dumps(vars(self))
 
     @classmethod
@@ -42,13 +45,13 @@ class MoSTSchedule:
         rv.__dict__ = var_dict
         return rv
 
-    # Spits out SysTL code that does the same thing as apply()
+    # Spits out exo code that does the same thing as apply()
     # May or may not be a good idea, depending on how important
     # you think the ability to punch through the black box is.
     # Implementing this is optional. Nothing should depend on it.
     # Use serialize() and deserialize() instead
     # Strictly a convenience function to be run by end users.
-    def generateBackendCode(self, fn, backend="systl"):
+    def generateBackendCode(self, fn, backend="exo"):
         raise NotImplementedError
         
 # object representing multiple transfoms in sequence to represent function composition
@@ -66,7 +69,7 @@ class CompoundSchedule(MoSTSchedule):
             else:
                 self.subschedules.append(subsched)
 
-    def apply(self, fn, backend="systl"):
+    def apply(self, fn, backend="exo"):
         transformed = fn
         for subsched in self.subschedules:
             transformed = subsched.apply(transformed)
@@ -79,11 +82,11 @@ class CompoundSchedule(MoSTSchedule):
         return json.dumps(vars(self))
 
 
-# This object JUST contains a snippet of SysTL code.
+# This object JUST contains a snippet of exo code.
 # Shouldn't be used most of the time, but may be useful if you
-# need to, say, run a few explicit SysTL calls within a CompoundSchedule
+# need to, say, run a few explicit exo calls within a CompoundSchedule
 # Probably dangerous.
 
-class SysTLCodeSchedule(MoSTSchedule):
+class ExoCodeSchedule(MoSTSchedule):
     def __init__(self, code):
         pass

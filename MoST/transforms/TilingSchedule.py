@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 import sys
-from SYS_ATL import proc, Procedure, DRAM, config, instr, QAST
+from exo import proc, Procedure, DRAM, config, instr, QAST
 from MoST.MoST_base import *
 from MoST.qast_utils.loopReader import *
 from itertools import dropwhile
@@ -20,7 +20,7 @@ class TilingSchedule(MoSTSchedule):
         #self.tile_bounds = tile_bounds
         self.simplify = simplify
 
-    def apply(self, fn, backend="systl"):
+    def apply(self, fn, backend="exo"):
         for loop_idx in self.tile_dict:
             block_size = self.tile_dict[loop_idx]
             new_names = (loop_idx + "_out", loop_idx + "_in")

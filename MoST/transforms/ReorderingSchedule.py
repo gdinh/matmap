@@ -1,7 +1,7 @@
 from __future__ import annotations
 from cmath import cos
 import sys
-from SYS_ATL import proc, Procedure, DRAM, config, instr, QAST
+from exo import proc, Procedure, DRAM, config, instr, QAST
 from MoST.MoST_base import *
 from MoST.qast_utils.loopReader import *
 from itertools import dropwhile
@@ -12,7 +12,7 @@ class ReorderingSchedule(MoSTSchedule):
     def __init__(self, loop_order):
         self.loop_order = loop_order
         
-    def apply(self, fn, backend="systl"):
+    def apply(self, fn, backend="exo"):
         def get_loop_order(obj):
             loops = readLoopNest(obj)[0]
             loop_list = []
@@ -38,7 +38,6 @@ class ReorderingSchedule(MoSTSchedule):
                     if given_list[j] > given_list[j+1]:
                         fn = fn.reorder(loop_dict[given_list[j]], loop_dict[given_list[j+1]])
                         given_list[j], given_list[j+1] = given_list[j+1], given_list[j]    
-                        print(fn)
         return fn
 
 

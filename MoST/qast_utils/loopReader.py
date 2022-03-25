@@ -1,6 +1,6 @@
 from __future__ import annotations
 import sys
-from SYS_ATL import proc, Procedure, DRAM, config, instr, QAST
+from exo import proc, Procedure, DRAM, config, instr, QAST
 from collections import namedtuple
 from itertools import chain
 
