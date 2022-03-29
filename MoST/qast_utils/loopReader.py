@@ -35,6 +35,9 @@ def readLoopNest(nest, order=0):
 def getNestBounds(nest, order=0):
   return readLoopNest(nest, order)[0]
 
+def getNestVars(nest, order=0):
+  return [i.name for i in getNestBounds(nest, order)]
+
 # NB: right now, we don't support nonuniform accesses
 # for instance, A[B[i]] is not supported
 # in that case the current behavior is to return a DataAccess

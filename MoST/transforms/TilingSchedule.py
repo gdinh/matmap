@@ -21,7 +21,9 @@ class TilingSchedule(MoSTSchedule):
         self.simplify = simplify
 
     def apply(self, fn, backend="exo"):
-        for loop_idx in self.tile_dict:
+        loop_vars = getNestVars(fn)
+        assert set(loop_vars) == set(self.tile_dict.keys()),"tile vars don't match loop vars of function you're applying to!"
+        for loop_idx in loop_vars:
             block_size = self.tile_dict[loop_idx]
             new_names = (loop_idx + "_out", loop_idx + "_in")
             perfect = False #FIXME detect if lo, hi are constant; can infer
@@ -31,8 +33,7 @@ class TilingSchedule(MoSTSchedule):
                 new_names,
                 tail='cut',
                 perfect=perfect)
-            new_bounds = getNestBounds(fn)
-            loop_indices = [loop.name for loop in new_bounds]
+            loop_indices = getNestVars(fn)
             _, *indices_after = dropwhile(lambda idx: idx != loop_idx + '_in', loop_indices)
             for idxafter in indices_after:
                 fn = fn.reorder(loop_idx + "_in #0", idxafter)
