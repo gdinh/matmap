@@ -76,11 +76,7 @@ class TilingSchedule(MoSTSchedule):
         idxvar = dict([(i, bounds[i].name) for i in range(len(bounds))])
         loophi = [loop.hi for loop in bounds]
         looplo = [loop.lo for loop in bounds]
-        if not all(map(lambda bound: isinstance(bound, QAST.Const), loophi)):
-            raise NotImplementedError("Can't specialize for nonconst bounds")
-        if not all(map(lambda bound: isinstance(bound, QAST.Const), looplo)):
-            raise NotImplementedError("Can't specialize for nonconst bounds")
-        ell = np.array([loop.hi.val - loop.lo.val for loop in bounds])
+        ell = np.array([loop.hi - loop.lo for loop in bounds])
         phis = [[varidx[var] for var in access.support] for access in accesses]
 
         if(verbose):
