@@ -22,7 +22,7 @@ class TilingSchedule(MoSTSchedule):
 
     def apply(self, fn, backend="exo"):
         loop_vars = getNestVars(fn)
-        #assert set(loop_vars) == set(self.tile_dict.keys()),"tile vars don't match loop vars of function you're applying to!"
+        assert set(self.tile_dict.keys()).intersection(set(loop_vars)) == set(self.tile_dict.keys()), "tile vars don't match loop vars of function you're applying to!"
         for loop_idx in loop_vars:
             if loop_idx not in self.tile_dict:
                 continue
