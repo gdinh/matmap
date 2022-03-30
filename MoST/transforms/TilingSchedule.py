@@ -22,8 +22,10 @@ class TilingSchedule(MoSTSchedule):
 
     def apply(self, fn, backend="exo"):
         loop_vars = getNestVars(fn)
-        assert set(loop_vars) == set(self.tile_dict.keys()),"tile vars don't match loop vars of function you're applying to!"
+        #assert set(loop_vars) == set(self.tile_dict.keys()),"tile vars don't match loop vars of function you're applying to!"
         for loop_idx in loop_vars:
+            if loop_idx not in self.tile_dict:
+                continue
             block_size = self.tile_dict[loop_idx]
             new_names = (loop_idx + "_out", loop_idx + "_in")
             perfect = False #FIXME detect if lo, hi are constant; can infer
