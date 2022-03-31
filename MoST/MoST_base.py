@@ -27,8 +27,8 @@ class MoSTSchedule:
     # https://desert.readthedocs.io/en/stable/
     def serialize(self):
         dump = dict()
-        dump['__class__'] = str(self.__class__)
-        dump['__module__'] = str(self.__module__)
+        #dump['__class__'] = self.__class__
+        #dump['__module__'] = self.__module__
         for field in self.fields():
             dump[field] = getattr(self, field)
         return json.dumps(dump)
@@ -53,8 +53,8 @@ class MoSTSchedule:
         """
         rv = cls()
         fieldVals = json.loads(dump)
-        for fieldName in self.fields():
-            setattr(self, fieldName, fieldVals[fieldName])
+        for fieldName in fieldVals:
+            setattr(rv, fieldName, fieldVals[fieldName])
         return rv
 
     # Spits out exo code that does the same thing as apply()
