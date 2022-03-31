@@ -26,13 +26,20 @@ class MoSTSchedule:
     # https://marshmallow.readthedocs.io/en/stable/
     # https://desert.readthedocs.io/en/stable/
     def serialize(self):
-        dump = vars(self)
+        dump = dict()
         dump['__class__'] = str(self.__class__)
         dump['__module__'] = str(self.__module__)
-        return json.dumps(vars(self))
+        for field in self.fields():
+            dump[field] = getattr(self, field)
+        return json.dumps(dump)
+
+    #can and should override this for anything with temp vars
+    def fields(self):
+        return vars(self).keys()
 
     @classmethod
     def deserialize(cls, dump):
+        """
         var_dict = json.loads(dump)
 
         sched_type_str = var_dict['_schedule_type']
@@ -43,6 +50,11 @@ class MoSTSchedule:
         
         fields = eval(sched_type + '()')
         rv.__dict__ = var_dict
+        """
+        rv = cls()
+        fieldVals = json.loads(dump)
+        for fieldName in self.fields():
+            setattr(self, fieldName, fieldVals[fieldName])
         return rv
 
     # Spits out exo code that does the same thing as apply()
@@ -53,7 +65,7 @@ class MoSTSchedule:
     # Strictly a convenience function to be run by end users.
     def generateBackendCode(self, fn, backend="exo"):
         raise NotImplementedError
-        
+
 # object representing multiple transfoms in sequence to represent function composition
 class CompoundSchedule(MoSTSchedule):
 

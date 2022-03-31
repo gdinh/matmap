@@ -10,11 +10,8 @@ from MoST.qast_utils.loopReader import *
 from itertools import dropwhile
 
 class TilingSchedule(MoSTSchedule):
-    #loop bounds are a ForLoop object
-    #tile_bounds is a dict mapping names from the ForLoop to numbers
-    #FIXME OLD def __init__(self, loop_bounds, tile_bounds, simplify=True):
     #tile_dict is a dict from strings (var names) to numbers.
-    def __init__(self, tile_dict, simplify=True):
+    def __init__(self, tile_dict=dict(), simplify=True):
         self.tile_dict = tile_dict
         #self.loop_bounds = loop_bounds
         #self.tile_bounds = tile_bounds
