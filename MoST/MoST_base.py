@@ -10,8 +10,7 @@ class MoSTSchedule:
     # Actually deciding the tile should be the job of a function in /schedules
     # that generates an object of this class (or its subclass).
     def __init__(self):
-        #for serialization purposes
-        self._schedule_type = self.__class__.__name__
+        pass
 
     # Apply the transformation to the inputted object.
     # fn's type depends on the backend (e.g. an exo function)

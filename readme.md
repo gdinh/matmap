@@ -1,25 +1,30 @@
 # MoST: MOdular Scheduling Transforms
 
-A representation for higher-level transforms, with tools to generate [SysTL](https://github.com/ChezJrk/SYS_ATL) code.
+A representation for higher-level transforms, with tools to generate [EXO](https://github.com/ChezJrk/exo) code.
 
-Source organization:
+## Setup
+
+This has been extensively tested on Python 3.9.7. Python versions 3.7 and earlier are not supported as Exo requires several newer language features not available.
 
 ```
-├── most_base.py: main interface, common libraries, etc.
-├── docs - not just documentation, but papers, working drafts, etc.
-├── qast_utils - Utilities for generating semantic data from QAST object; necessary to 
-└── transforrms - specific instances of transforms. Automatic bits are currently factory methods in these objects.
-    └── TilingSchedule.py
+git clone https://github.com/gdinh/MoST.git
+cd MoST
+python -m venv $HOME/.venv/most
+source $HOME/.venv/most/bin/activate
+python -m pip install pip setuptools wheel
+python -m pip install -r requirements.txt
 ```
 
-Design goals can be found under docs/design-goals-and-overview.lyx.
+If you'd like to run the interactive demos/documentation, install iPython and set it up so that it points to your venv by running these *from within the venv*:
 
-To install, put it in the root directory of a SysTL install, and add the parent of the MoST directory (normally just the SysTL directory) to your venv path. That is:
+```
+python -m pip install jupyter
+ipython kernel install --user --name=MoST_venv
+```
 
-- Find the site_packages directory with `python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")`
-- Create a new file (name isn't important; I use `sysatl_venv_root.pth`) with the above directory (e.g. `/home/eecs/dinh/SYS_ATL`) as its contents
+Now, you'll be able to launch `jupyter notebook`; just navigate to `docs/` and open `most_demo.ipynb`, then point the notebook to the venv using Kernel > Change kernel > MoST_venv.
 
-Project status:
+## Project status:
 - Tiling schedule works
 - HBL projective optimal tiling works for constant loop bounds
 
