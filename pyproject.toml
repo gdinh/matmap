@@ -1,0 +1,10 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    'ignore:lib2to3 package is deprecated:PendingDeprecationWarning'
+]
+norecursedirs = ['dependencies']
+pythonpath = "src/"

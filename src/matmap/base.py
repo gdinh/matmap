@@ -1,9 +1,9 @@
-# MoST_base.py
+# base.py
 # Base classes for MoST
 
 import json
 
-class MoSTSchedule:
+class Transform:
 
     # This constructor SHOULD NOT actually implement the schedule
     # For instance, for an autotiler, the constructor should just create 
@@ -66,7 +66,7 @@ class MoSTSchedule:
         raise NotImplementedError
 
 # object representing multiple transfoms in sequence to represent function composition
-class CompoundSchedule(MoSTSchedule):
+class CompoundTransform(Transform):
 
     def __init__(self, schedule_list, flattenWhenComposed=True):
         self.subschedules = []
@@ -74,8 +74,8 @@ class CompoundSchedule(MoSTSchedule):
         # some schedules may want to preserve structure (e.g. subclasses that keep extra metadata)
         self.flattenWhenComposed = flattenWhenComposed
         for subsched in schedule_list:
-            assert isinstance(subsched, MoSTSchedule), "Non-MoSTSchedule argument passed into CompoundSchedule"
-            if isinstance(subsched, CompoundSchedule) and subsched.flattenWhenComposed:
+            assert isinstance(subsched, Transform), "Non-MoSTSchedule argument passed into CompoundSchedule"
+            if isinstance(subsched, CompoundTransform) and subsched.flattenWhenComposed:
                 self.subschedules.extend(subsched.subschedules)
             else:
                 self.subschedules.append(subsched)
@@ -98,6 +98,6 @@ class CompoundSchedule(MoSTSchedule):
 # need to, say, run a few explicit exo calls within a CompoundSchedule
 # Probably dangerous.
 
-class ExoCodeSchedule(MoSTSchedule):
+class ExoCodeTransform(Transform):
     def __init__(self, code):
         pass

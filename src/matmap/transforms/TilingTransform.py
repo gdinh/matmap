@@ -3,19 +3,23 @@
 # TODO rewrite this so that it doesn't 
 
 from __future__ import annotations
+from select import select
 import sys
 from exo import proc, Procedure, DRAM, config, instr, QAST
-from MoST.MoST_base import *
-from MoST.qast_utils.loopReader import *
+from matmap.base import *
+from matmap.qast_utils.loopReader import *
 from itertools import dropwhile
 
-class TilingSchedule(MoSTSchedule):
+class TilingTransform(Transform):
     #tile_dict is a dict from strings (var names) to numbers.
-    def __init__(self, tile_dict=dict(), simplify=True):
+    def __init__(self, tile_dict=dict(), simplify=True, splitOnly=False, tail='cut', limit_dict=None):
         self.tile_dict = tile_dict
         #self.loop_bounds = loop_bounds
         #self.tile_bounds = tile_bounds
         self.simplify = simplify
+        self.splitOnly = splitOnly
+        self.limit_dict = limit_dict
+        self.tail = tail
 
     def apply(self, fn, backend="exo"):
         loop_vars = getNestVars(fn)
@@ -24,21 +28,36 @@ class TilingSchedule(MoSTSchedule):
             if loop_idx not in self.tile_dict:
                 continue
             block_size = self.tile_dict[loop_idx]
-            new_names = (loop_idx + "_out", loop_idx + "_in")
+            new_names = (loop_idx + "o", loop_idx + "i")
             perfect = False #FIXME detect if lo, hi are constant; can infer
             fn = fn.split(
-                loop_idx + " #0",
+                #FIXME  locator #0 removed here...
+                loop_idx,# + " #0",
                 block_size,
                 new_names,
-                tail='cut',
+                tail=self.tail,
                 perfect=perfect)
-            loop_indices = getNestVars(fn)
-            _, *indices_after = dropwhile(lambda idx: idx != loop_idx + '_in', loop_indices)
-            for idxafter in indices_after:
-                fn = fn.reorder(loop_idx + "_in #0", idxafter)
+            if not self.splitOnly:
+                loop_indices = getNestVars(fn)
+                _, *indices_after = dropwhile(lambda idx: idx != loop_idx + '_in', loop_indices)
+                for idxafter in indices_after:
+                    fn = fn.reorder(loop_idx + "_in #0", idxafter)
         if self.simplify:
             fn = fn.simplify()
         return fn
+
+    def tuning_vars(self):
+        raise NotImplementedError
+        import skopt.space.space as space
+        assert self.limit_dict is not None, "limits needed"
+        rv = []
+        for var in self.limit_dict:
+            rv.append(
+                (self, 
+                space.Integer(1, self.limit_dict[var], transform="normalize", name=var)
+                )
+            )
+        return rv
 
     # generates tiles for projective nested loops
     # see https://arxiv.org/abs/2003.00119

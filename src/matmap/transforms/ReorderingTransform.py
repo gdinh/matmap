@@ -2,11 +2,11 @@ from __future__ import annotations
 from cmath import cos
 import sys
 from exo import proc, Procedure, DRAM, config, instr, QAST
-from MoST.MoST_base import *
-from MoST.qast_utils.loopReader import *
+from matmap.base import *
+from matmap.qast_utils.loopReader import *
 from itertools import dropwhile
 
-class ReorderingSchedule(MoSTSchedule):
+class ReorderingTransform(Transform):
     #loop bounds are a ForLoop object
     #tile_bounds is a dict mapping names from the ForLoop to numbers
     def __init__(self, loop_order):
