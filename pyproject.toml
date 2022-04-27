@@ -1,10 +1,42 @@
-[build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
-
-[tool.pytest.ini_options]
-filterwarnings = [
-    'ignore:lib2to3 package is deprecated:PendingDeprecationWarning'
+[tool.poetry]
+name = "matmap"
+version = "0.1.0"
+description = "MatMap: A Modular, Automatable, Tunable Mapper for Accelerator Programming"
+authors = ["Grace Dinh <dinh@berkeley.edu>"]
+maintainers = ["Grace Dinh <dinh@berkeley.edu>"]
+readme = "readme.md"
+homepage = "https://github.com/gdinh/matmap"
+repository = "https://github.com/gdinh/matmap"
+keywords = [
+    "scheduling",
+    "language",
+    "performance",
+    "dsl",
+    "autotuning"
 ]
-norecursedirs = ['dependencies']
-pythonpath = "src/"
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Image Processing",
+    "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Code Generators",
+    "Topic :: Software Development :: Compilers"
+]
+license = "Apache-2.0"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+exo-lang = "^0.0.2"
+cvxpy = "^1.0.0"
+
+[tool.poetry.dev-dependencies]
+jupyter = "^1.0.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
